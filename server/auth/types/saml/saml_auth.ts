@@ -33,6 +33,7 @@ import {
 } from '../../../session/security_cookie';
 import { SamlAuthRoutes } from './routes';
 import { AuthenticationType } from '../authentication_type';
+import { AuthType, SAML_AUTH_LOGIN } from '../../../../common';
 
 export class SamlAuthentication extends AuthenticationType {
   public static readonly AUTH_HEADER_NAME = 'authorization';
@@ -62,6 +63,7 @@ export class SamlAuthentication extends AuthenticationType {
   private redirectSAMlCapture = (request: OpenSearchDashboardsRequest, toolkit: AuthToolkit) => {
     const nextUrl = this.generateNextUrl(request);
     const clearOldVersionCookie = clearOldVersionCookieValue(this.config);
+
     return toolkit.redirected({
       location: `${this.coreSetup.http.basePath.serverBasePath}/auth/saml/captureUrlFragment?nextUrl=${nextUrl}`,
       'set-cookie': clearOldVersionCookie,
@@ -87,13 +89,16 @@ export class SamlAuthentication extends AuthenticationType {
     return {};
   }
 
-  getCookie(request: OpenSearchDashboardsRequest, authInfo: any): SecuritySessionCookie {
+  async getCookie(
+    request: OpenSearchDashboardsRequest,
+    authInfo: any
+  ): Promise<SecuritySessionCookie> {
     return {
       username: authInfo.user_name,
       credentials: {
         authHeaderValue: request.headers[SamlAuthentication.AUTH_HEADER_NAME],
       },
-      authType: this.type,
+      authType: AuthType.SAML,
       expiryTime: Date.now() + this.config.session.ttl,
     };
   }
@@ -101,7 +106,7 @@ export class SamlAuthentication extends AuthenticationType {
   // Can be improved to check if the token is expiring.
   async isValidCookie(cookie: SecuritySessionCookie): Promise<boolean> {
     return (
-      cookie.authType === this.type &&
+      cookie.authType === AuthType.SAML &&
       cookie.username &&
       cookie.expiryTime &&
       cookie.credentials?.authHeaderValue
