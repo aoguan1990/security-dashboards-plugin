@@ -24,11 +24,21 @@ export function LogoutButton(props: {
   divider: JSX.Element;
   logoutUrl?: string;
 }) {
-  const currentAuthType: string = props.authType.trim().toLowerCase();
-
-  if (currentAuthType === 'openid' || currentAuthType === 'saml') {
-    sessionStorage.clear();
-
+  if (props.authType === 'openid') {
+    return (
+      <div>
+        {props.divider}
+        <EuiButtonEmpty
+          data-test-subj="log-out-2"
+          color="danger"
+          size="xs"
+          href={`${props.http.basePath.serverBasePath}/auth/logout`}
+        >
+          Log out
+        </EuiButtonEmpty>
+      </div>
+    );
+  } else if (props.authType === 'saml') {
     return (
       <div>
         {props.divider}
@@ -36,13 +46,13 @@ export function LogoutButton(props: {
           data-test-subj="log-out-1"
           color="danger"
           size="xs"
-          href={`${props.http.basePath.serverBasePath}/auth/${currentAuthType}/logout`}
+          onClick={() => samlLogout(props.http)}
         >
           Log out
         </EuiButtonEmpty>
       </div>
     );
-  } else if (currentAuthType === 'proxy') {
+  } else if (props.authType === 'proxy') {
     return <div />;
   } else {
     return (
